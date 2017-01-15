@@ -1,5 +1,10 @@
 package com.tvjunkie;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,17 +17,31 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.tvjunkie.api.TVJunkieAPIClientMain;
 import com.tvjunkie.ui.trendingMoviesRecyclerView.adapter.TrendingMoviesRecyclerViewAdapter;
 import com.tvjunkie.ui.trendingMoviesRecyclerView.adapter.model.Movie;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    String PREFS_FILENAME = "com.tvjunkie.sharedPreferences";
+
     RecyclerView trendingMoviesRecyclerView;
     TrendingMoviesRecyclerViewAdapter trendingMoviesRecyclerViewAdapter;
 
+    ArrayList<Movie> movieList;
+
+    SharedPreferences tvJunkieSharedPreferences;
+
+    TVJunkieAPIClientMain tvJunkieAPIClientMain;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,14 +62,36 @@ public class MainActivity extends AppCompatActivity
 
 
         // TrendingMoviesRecyclerViewAdapter
-//        ArrayList<Movie> movieList = TVJunkieAPIClientKt.getTrendingMovies();
-        ArrayList<Movie> movieList = new ArrayList<>();
-        movieList.add(0, new Movie("Trolls", "", "", "2016", "36"));
+        movieList = new ArrayList<Movie>();
 
         trendingMoviesRecyclerView = (RecyclerView) findViewById(R.id.recycler_view_trending_movies);
         trendingMoviesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        trendingMoviesRecyclerViewAdapter = new TrendingMoviesRecyclerViewAdapter(movieList, getApplication());
+        trendingMoviesRecyclerViewAdapter = new TrendingMoviesRecyclerViewAdapter(movieList, this);
         trendingMoviesRecyclerView.setAdapter(trendingMoviesRecyclerViewAdapter);
+
+        //SharedPreferences TVJunkie
+        tvJunkieSharedPreferences = getSharedPreferences(PREFS_FILENAME, MODE_PRIVATE);
+
+        //BroadcastReceiver registration
+        getApplicationContext().registerReceiver(trendingMoviesListUpdated, new IntentFilter
+          ("trendingMoviesUpdated"));
+
+        //TVJunkieAPIClient Init
+        tvJunkieAPIClientMain = new TVJunkieAPIClientMain(getApplicationContext());
+        tvJunkieAPIClientMain.getTrendingMovies();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        getApplicationContext().registerReceiver(trendingMoviesListUpdated, new IntentFilter
+          ("trendingMoviesUpdated"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getApplicationContext().unregisterReceiver(trendingMoviesListUpdated);
     }
 
     @Override
@@ -92,6 +133,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_trendingMovies) {
+            tvJunkieAPIClientMain.getTrendingMovies();
 
         } else if (id == R.id.nav_trendingSeries) {
 
@@ -107,4 +149,49 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    public void updateData() throws JSONException {
+
+        String movieListTrending = tvJunkieSharedPreferences.getString("KEY_MOVIES_TRENDING", "");
+
+        JSONArray jsonArray = new JSONArray(movieListTrending);
+        ArrayList<Movie> list = new ArrayList<>();
+        for (int i=0; i<jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            list.add(new Movie(jsonObject.getJSONObject("movie").optString("title",
+              "default"), jsonObject.getJSONObject("movie").optString("description", "No description"),
+              jsonObject.getJSONObject("movie").optString("imageID", ""),
+              jsonObject.getJSONObject("movie").optString("year", ""), jsonObject.optString("watchers", "")));
+        }
+        movieList.clear();
+        movieList.addAll(list);
+
+        sortMovieList(movieList);
+        updateDatasetAdapter();
+    }
+
+    private void sortMovieList(ArrayList<Movie> movieList){
+        Collections.sort(movieList, new Comparator<Movie>() {
+            @Override
+            public int compare(Movie lhs, Movie rhs) {
+                return lhs.watchers.compareTo(rhs.watchers);
+            }
+        });
+    }
+
+    private void updateDatasetAdapter(){
+        trendingMoviesRecyclerViewAdapter.notifyDataSetChanged();
+    }
+
+    private BroadcastReceiver trendingMoviesListUpdated = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                updateData();
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 }
