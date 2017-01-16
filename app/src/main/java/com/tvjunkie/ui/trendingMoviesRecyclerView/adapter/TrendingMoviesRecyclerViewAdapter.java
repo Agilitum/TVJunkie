@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
 import com.tvjunkie.R;
 import com.tvjunkie.ui.trendingMoviesRecyclerView.adapter.model.Movie;
 
@@ -56,8 +57,11 @@ public class TrendingMoviesRecyclerViewAdapter extends RecyclerView
 	@Override
 	public void onBindViewHolder(TrendingMoviesRecyclerViewAdapter.ViewHolder holder, int position) {
 		holder.movieTitle.setText(movieList.get(position).title);
-		//TODO: use picasso?
-//		holder.movieImage.setImageResource();
+		Picasso.with(context)
+			.load(movieList.get(position).imageURL)
+			.placeholder(R.drawable.tv_junkie)
+			.error(R.drawable.tv_junkie)
+			.into(holder.movieImage);
 	}
 
 	@Override

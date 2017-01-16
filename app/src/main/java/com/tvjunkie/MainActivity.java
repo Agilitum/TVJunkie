@@ -75,6 +75,8 @@ public class MainActivity extends AppCompatActivity
         //BroadcastReceiver registration
         getApplicationContext().registerReceiver(trendingMoviesListUpdated, new IntentFilter
           ("trendingMoviesUpdated"));
+        getApplicationContext().registerReceiver(trendingMoviesImagesUpdated, new IntentFilter
+          ("trendingMoviesImagesUpdated"));
 
         //TVJunkieAPIClient Init
         tvJunkieAPIClientMain = new TVJunkieAPIClientMain(getApplicationContext());
@@ -86,12 +88,15 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
         getApplicationContext().registerReceiver(trendingMoviesListUpdated, new IntentFilter
           ("trendingMoviesUpdated"));
+        getApplicationContext().registerReceiver(trendingMoviesImagesUpdated, new IntentFilter
+          ("trendingMoviesImagesUpdated"));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         getApplicationContext().unregisterReceiver(trendingMoviesListUpdated);
+        getApplicationContext().unregisterReceiver(trendingMoviesImagesUpdated);
     }
 
     @Override
@@ -150,9 +155,10 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void updateData() throws JSONException {
+    private void updateData() throws JSONException {
 
-        String movieListTrending = tvJunkieSharedPreferences.getString("KEY_MOVIES_TRENDING", "");
+        String movieListTrending = getSharedPreferencesString("KEY_MOVIES_TRENDING");
+//        tvJunkieSharedPreferences.getString("KEY_MOVIES_TRENDING", "");
 
         JSONArray jsonArray = new JSONArray(movieListTrending);
         ArrayList<Movie> list = new ArrayList<>();
@@ -160,12 +166,13 @@ public class MainActivity extends AppCompatActivity
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             list.add(new Movie(jsonObject.getJSONObject("movie").optString("title",
               "default"), jsonObject.getJSONObject("movie").optString("description", "No description"),
-              jsonObject.getJSONObject("movie").optString("imageID", ""),
+              jsonObject.getJSONObject("movie").getJSONObject("ids").optInt("tmdb"), null,
               jsonObject.getJSONObject("movie").optString("year", ""), jsonObject.optString("watchers", "")));
         }
         movieList.clear();
         movieList.addAll(list);
 
+        getImagesForMovies(movieList);
         sortMovieList(movieList);
         updateDatasetAdapter();
     }
@@ -183,6 +190,27 @@ public class MainActivity extends AppCompatActivity
         trendingMoviesRecyclerViewAdapter.notifyDataSetChanged();
     }
 
+    private void getImagesForMovies(ArrayList<Movie> movies){
+            tvJunkieAPIClientMain.getTrendingMovieImage(movieList);
+    }
+
+    private void updateImagesForMovies() throws JSONException{
+        for (int t = 0; t < movieList.size(); t++){
+            int movieID = movieList.get(t).imageId;
+            String imageURL = getSharedPreferencesString(Integer.toString(movieID));
+
+            String tmpFilePath = new JSONObject(imageURL).getJSONArray("backdrops").getJSONObject(0)
+              .optString("file_path");
+
+           movieList.get(t).imageURL = "https://image.tmdb.org/t/p/w1000" + tmpFilePath;
+        }
+    }
+
+    private String getSharedPreferencesString(String key){
+        return tvJunkieSharedPreferences.getString(key, "");
+    }
+
+
     private BroadcastReceiver trendingMoviesListUpdated = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -190,6 +218,18 @@ public class MainActivity extends AppCompatActivity
                 updateData();
 
             } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private BroadcastReceiver trendingMoviesImagesUpdated = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                updateImagesForMovies();
+
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

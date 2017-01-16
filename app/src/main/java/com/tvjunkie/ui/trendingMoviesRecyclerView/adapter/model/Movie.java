@@ -8,14 +8,17 @@ public class Movie {
 
 	public String title;
 	public String description;
-	public String imageId;
+	public Integer imageId;
+	public String imageURL;
 	public String year;
 	public String watchers;
 
-	public Movie (String title, String description, String imageId, String year, String watchers) {
+	public Movie (String title, String description, Integer imageId, String imageURL, String year,
+	              String watchers) {
 		this.title = title;
 		this.description = description;
 		this.imageId = imageId;
+		this.imageURL = imageURL;
 		this.year = year;
 		this.watchers = watchers;
 	}
