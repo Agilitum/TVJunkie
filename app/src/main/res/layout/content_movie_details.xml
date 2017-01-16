@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/content_movie_details"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.tvjunkie.MovieDetails"
+    tools:showIn="@layout/activity_movie_details">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        app:srcCompat="@drawable/tv_junkie"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/image_movie_details"
+        android:scaleType="centerCrop"/>
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/title_movie_details"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:textSize="36sp"
+        android:paddingLeft="8dp"/>
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title_movie_details"
+        android:layout_alignParentStart="true"
+        android:id="@+id/year_movie_details"
+        android:textSize="18sp"
+        android:paddingLeft="12dp"/>
+</RelativeLayout>

@@ -16,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.tvjunkie.api.TVJunkieAPIClientMain;
 import com.tvjunkie.ui.trendingMoviesRecyclerView.adapter.TrendingMoviesRecyclerViewAdapter;
@@ -81,6 +82,18 @@ public class MainActivity extends AppCompatActivity
         //TVJunkieAPIClient Init
         tvJunkieAPIClientMain = new TVJunkieAPIClientMain(getApplicationContext());
         tvJunkieAPIClientMain.getTrendingMovies();
+
+        //setOnItemClickListener for Adapter
+        trendingMoviesRecyclerViewAdapter.SetOnItemClickListener(new TrendingMoviesRecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Intent movieDetail = new Intent(getApplicationContext(), MovieDetails.class);
+                movieDetail.putExtra("movieTitle", movieList.get(position).title);
+                movieDetail.putExtra("movieYear", movieList.get(position).year);
+                movieDetail.putExtra("movieImageURL", movieList.get(position).imageURL);
+                MainActivity.this.startActivity(movieDetail);
+            }
+        });
     }
 
     @Override

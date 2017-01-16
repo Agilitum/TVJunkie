@@ -24,6 +24,8 @@ public class TrendingMoviesRecyclerViewAdapter extends RecyclerView
 	ArrayList<Movie> movieList = new ArrayList<>();
 	Context context;
 
+	OnItemClickListener mItemClickListener;
+
 	public TrendingMoviesRecyclerViewAdapter(ArrayList<Movie> movieList, Context context){
 		this.movieList = movieList;
 		this.context = context;
@@ -39,12 +41,24 @@ public class TrendingMoviesRecyclerViewAdapter extends RecyclerView
 
 			movieImage = (ImageView) itemView.findViewById(R.id.movie_image);
 			movieTitle = (TextView) itemView.findViewById(R.id.movie_title);
+
+			itemView.setOnClickListener(this);
 		}
 
 		@Override
 		public void onClick(View v) {
-
+			if (mItemClickListener != null){
+				mItemClickListener.onItemClick(v, getPosition());
+			}
 		}
+	}
+
+	public interface OnItemClickListener {
+		public void onItemClick(View view , int position);
+	}
+
+	public void SetOnItemClickListener(final OnItemClickListener mItemClickListener) {
+		this.mItemClickListener = mItemClickListener;
 	}
 
 	@Override
